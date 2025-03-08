@@ -53,37 +53,30 @@ fun Application.configureDatabases() {
     }
 
     routing {
-        // Create user
-        post("/users") {
-            val user = call.receive<ExposedUser>()
-            val id = userService.create(user)
-            call.respond(HttpStatusCode.Created, id)
-        }
+        route("/auth") {
+            post("/register") {
+                val user = call.receive<ExposedUser>()
+                val existingUser = userService.readByEmail(user.email)
+                if (existingUser != null) {
+                    return@post call.respond(HttpStatusCode.Conflict, "User already exists")
+                }
 
-        // Read user
-        get("/users/{id}") {
-            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            val user = userService.read(id)
-            if (user != null) {
-                call.respond(HttpStatusCode.OK, user)
-            } else {
-                call.respond(HttpStatusCode.NotFound)
+                val newUser = ExposedUser(user.name, user.email, user.password)
+                val id = userService.create(newUser)
+                call.respond(HttpStatusCode.Created, id)
             }
-        }
 
-        // Update user
-        put("/users/{id}") {
-            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            val user = call.receive<ExposedUser>()
-            userService.update(id, user)
-            call.respond(HttpStatusCode.OK)
-        }
+            post("/login") {
+                val user = call.receive<ExposedUser>()
+                val existingUser = userService.readByEmail(user.email)
+                if (existingUser == null || user.password != existingUser.password) {
+                    return@post call.respond(HttpStatusCode.Unauthorized, "Invalid credentials")
+                }
 
-        // Delete user
-        delete("/users/{id}") {
-            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            userService.delete(id)
-            call.respond(HttpStatusCode.OK)
+                // Create JWT token
+                val jwt = userService.createJWT(existingUser)
+                call.respond(HttpStatusCode.OK, mapOf("token" to jwt))
+            }
         }
     }
 }

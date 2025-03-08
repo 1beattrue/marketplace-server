@@ -32,6 +32,8 @@ class MarketItemService(database: Database) {
         val brand = varchar("brand", length = 255)
         val category = varchar("category", length = 255)
         val thumbnail = text("thumbnail")
+
+        override val primaryKey = PrimaryKey(id)
     }
 
     init {
