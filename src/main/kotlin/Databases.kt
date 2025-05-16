@@ -2,6 +2,7 @@ package ru.mirea
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -13,42 +14,50 @@ fun Application.configureDatabases() {
     val userService = UserService(database)
 
     routing {
-        // Create market item
-        post("/market_items") {
-            val item = call.receive<MarketItem>()
-            val id = marketItemService.create(item)
-            call.respond(HttpStatusCode.Created, id)
-        }
-
-        // Read market item
-        get("/market_items/{id}") {
-            val id =
-                call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-            val item = marketItemService.read(id)
-            if (item != null) {
-                call.respond(HttpStatusCode.OK, item)
-            } else {
-                call.respond(HttpStatusCode.NotFound)
+        authenticate {
+            // Create market item
+            post("/market_items") {
+                val item = call.receive<MarketItem>()
+                val id = marketItemService.create(item)
+                call.respond(HttpStatusCode.Created, id)
             }
-        }
 
-        // Update market item
-        put("/market_items/{id}") {
-            val id =
-                call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(HttpStatusCode.BadRequest, "Invalid ID")
-            val item = call.receive<MarketItem>()
-            marketItemService.update(id, item)
-            call.respond(HttpStatusCode.OK)
-        }
+            // Read market item
+            get("/market_items/{id}") {
+                val id =
+                    call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(
+                        HttpStatusCode.BadRequest,
+                        "Invalid ID"
+                    )
+                val item = marketItemService.read(id)
+                if (item != null) {
+                    call.respond(HttpStatusCode.OK, item)
+                } else {
+                    call.respond(HttpStatusCode.NotFound)
+                }
+            }
 
-        // Delete market item
-        delete("/market_items/{id}") {
-            val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(
-                HttpStatusCode.BadRequest,
-                "Invalid ID"
-            )
-            marketItemService.delete(id)
-            call.respond(HttpStatusCode.OK)
+            // Update market item
+            put("/market_items/{id}") {
+                val id =
+                    call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(
+                        HttpStatusCode.BadRequest,
+                        "Invalid ID"
+                    )
+                val item = call.receive<MarketItem>()
+                marketItemService.update(id, item)
+                call.respond(HttpStatusCode.OK)
+            }
+
+            // Delete market item
+            delete("/market_items/{id}") {
+                val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(
+                    HttpStatusCode.BadRequest,
+                    "Invalid ID"
+                )
+                marketItemService.delete(id)
+                call.respond(HttpStatusCode.OK)
+            }
         }
     }
 
@@ -62,7 +71,8 @@ fun Application.configureDatabases() {
                 }
 
                 val newUser = ExposedUser(user.name, user.email, user.password)
-                val createdUser = userService.readByEmail(newUser.email) ?: return@post call.respond(HttpStatusCode.InternalServerError, "User creation failed")
+                val createdUser = userService.readByEmail(newUser.email)
+                    ?: return@post call.respond(HttpStatusCode.InternalServerError, "User creation failed")
 
                 val jwt = userService.createJWT(createdUser)
                 call.respond(HttpStatusCode.Created, mapOf("token" to jwt))

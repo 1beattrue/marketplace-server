@@ -7,12 +7,13 @@ import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 
 fun Application.configureSecurity() {
-    // Please read the jwt property from the config file if you are using EngineMain
-    val jwtAudience = "jwt-audience"
-    val jwtDomain = "https://jwt-provider-domain/"
-    val jwtRealm = "ktor sample app"
+    val config = environment.config
+    val jwtAudience = config.property("postgres.audience").getString()
+    val jwtDomain = config.property("postgres.domain").getString()
+    val jwtRealm = config.property("postgres.realm").getString()
     val jwtSecret = "secret"
-    authentication {
+
+    install(Authentication) {
         jwt {
             realm = jwtRealm
             verifier(
@@ -23,11 +24,9 @@ fun Application.configureSecurity() {
                     .build()
             )
             validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) {
+                if (credential.payload.audience.contains(jwtAudience))
                     UserIdPrincipal(credential.payload.subject)
-                } else {
-                    null
-                }
+                else null
             }
         }
     }
