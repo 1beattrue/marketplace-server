@@ -62,8 +62,10 @@ fun Application.configureDatabases() {
                 }
 
                 val newUser = ExposedUser(user.name, user.email, user.password)
-                val id = userService.create(newUser)
-                call.respond(HttpStatusCode.Created, id)
+                val createdUser = userService.readByEmail(newUser.email) ?: return@post call.respond(HttpStatusCode.InternalServerError, "User creation failed")
+
+                val jwt = userService.createJWT(createdUser)
+                call.respond(HttpStatusCode.Created, mapOf("token" to jwt))
             }
 
             post("/login") {
