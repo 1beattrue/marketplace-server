@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 @Serializable
 data class MarketItem(
+    val id: Int,
     val title: String,
     val description: String,
     val price: Int,
@@ -17,7 +18,13 @@ data class MarketItem(
     val stock: Int,
     val brand: String,
     val category: String,
-    val thumbnail: String
+    val thumbnail: String,
+    val images: List<String>,
+)
+
+@Serializable
+data class RequestMarketItemsContainer(
+    val products: List<MarketItem>
 )
 
 class MarketItemService(database: Database) {
@@ -59,19 +66,7 @@ class MarketItemService(database: Database) {
     suspend fun read(id: Int): MarketItem? = dbQuery {
         MarketItems.selectAll()
             .where { MarketItems.id eq id }
-            .map {
-                MarketItem(
-                    title = it[MarketItems.title],
-                    description = it[MarketItems.description],
-                    price = it[MarketItems.price],
-                    discountPercentage = it[MarketItems.discountPercentage],
-                    rating = it[MarketItems.rating],
-                    stock = it[MarketItems.stock],
-                    brand = it[MarketItems.brand],
-                    category = it[MarketItems.category],
-                    thumbnail = it[MarketItems.thumbnail],
-                )
-            }
+            .map { toMarketItem(it) }
             .singleOrNull()
     }
 
@@ -130,6 +125,7 @@ class MarketItemService(database: Database) {
 
     private fun toMarketItem(row: ResultRow): MarketItem {
         return MarketItem(
+            id = row[MarketItems.id],
             title = row[MarketItems.title],
             description = row[MarketItems.description],
             price = row[MarketItems.price],
@@ -139,6 +135,7 @@ class MarketItemService(database: Database) {
             brand = row[MarketItems.brand],
             category = row[MarketItems.category],
             thumbnail = row[MarketItems.thumbnail],
+            images = listOf()
         )
     }
 }

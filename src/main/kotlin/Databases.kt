@@ -39,7 +39,7 @@ fun Application.configureDatabases() {
                 }
 
                 val items = marketItemService.getPaged(limit, skip)
-                call.respond(items)
+                call.respond(RequestMarketItemsContainer(items))
             }
 
             get("/products/categories") {
@@ -54,7 +54,7 @@ fun Application.configureDatabases() {
                 )
 
                 val items = marketItemService.getByCategory(category)
-                call.respond(items)
+                call.respond(RequestMarketItemsContainer(items))
             }
 
             get("/products/search") {
@@ -64,7 +64,7 @@ fun Application.configureDatabases() {
                 )
 
                 val items = marketItemService.search(query)
-                call.respond(items)
+                call.respond(RequestMarketItemsContainer(items))
             }
 
 
