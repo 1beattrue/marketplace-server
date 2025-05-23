@@ -86,6 +86,10 @@ class MarketItemService(database: Database) {
         }
     }
 
+    suspend fun deleteAll() = dbQuery {
+        MarketItems.deleteAll()
+    }
+
     suspend fun getPaged(limit: Int, skip: Int) = dbQuery {
         MarketItems.selectAll()
             .drop(skip)

@@ -32,6 +32,11 @@ fun Application.configureDatabases() {
                 call.respond(HttpStatusCode.Created)
             }
 
+            delete("/products") {
+                marketItemService.deleteAll()
+                call.respond(HttpStatusCode.OK)
+            }
+
             // Read market items paging
             get("/products") {
                 val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
