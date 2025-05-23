@@ -24,6 +24,14 @@ fun Application.configureDatabases() {
                 call.respond(HttpStatusCode.Created, insertedIds)
             }
 
+            put("/products") {
+                val items = call.receive<List<MarketItem>>()
+                val insertedIds = items.map { item ->
+                    marketItemService.update(item.id, item)
+                }
+                call.respond(HttpStatusCode.Created, insertedIds)
+            }
+
             // Read market items paging
             get("/products") {
                 val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20

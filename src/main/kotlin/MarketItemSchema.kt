@@ -39,6 +39,7 @@ class MarketItemService(database: Database) {
         val brand = varchar("brand", length = 255)
         val category = varchar("category", length = 255)
         val thumbnail = text("thumbnail")
+        val image = text("image")
 
         override val primaryKey = PrimaryKey(id)
     }
@@ -63,13 +64,6 @@ class MarketItemService(database: Database) {
         }[MarketItems.id]
     }
 
-    suspend fun read(id: Int): MarketItem? = dbQuery {
-        MarketItems.selectAll()
-            .where { MarketItems.id eq id }
-            .map { toMarketItem(it) }
-            .singleOrNull()
-    }
-
     suspend fun update(id: Int, item: MarketItem) {
         dbQuery {
             MarketItems.update({ MarketItems.id eq id }) {
@@ -82,6 +76,7 @@ class MarketItemService(database: Database) {
                 it[brand] = item.brand
                 it[category] = item.category
                 it[thumbnail] = item.thumbnail
+                it[image] = item.images.firstOrNull() ?: ""
             }
         }
     }
@@ -135,7 +130,7 @@ class MarketItemService(database: Database) {
             brand = row[MarketItems.brand],
             category = row[MarketItems.category],
             thumbnail = row[MarketItems.thumbnail],
-            images = listOf()
+            images = listOf(row[MarketItems.image]),
         )
     }
 }
