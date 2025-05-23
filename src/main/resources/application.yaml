@@ -5,7 +5,7 @@ ktor:
     deployment:
         port: 8080
 postgres:
-    url: "$DATABASE_URL:jdbc:postgresql://localhost:5434/postgres"
+    url: "$DATABASE_URL:jdbc:postgresql://localhost:5432/postgres"
     user: "$DATABASE_USERNAME:postgres"
     password: "$DATABASE_PASSWORD:postgres"
     domain: "https://jwt-provider-domain/"
