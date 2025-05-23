@@ -16,41 +16,60 @@ fun Application.configureDatabases() {
     routing {
         authenticate {
             // Create market item
-            post("/market_items") {
-                val item = call.receive<MarketItem>()
-                val id = marketItemService.create(item)
-                call.respond(HttpStatusCode.Created, id)
-            }
-
-            // Read market item
-            get("/market_items/{id}") {
-                val id =
-                    call.parameters["id"]?.toIntOrNull() ?: return@get call.respond(
-                        HttpStatusCode.BadRequest,
-                        "Invalid ID"
-                    )
-                val item = marketItemService.read(id)
-                if (item != null) {
-                    call.respond(HttpStatusCode.OK, item)
-                } else {
-                    call.respond(HttpStatusCode.NotFound)
+            post("/products") {
+                val items = call.receive<List<MarketItem>>()
+                val insertedIds = items.map { item ->
+                    marketItemService.create(item)
                 }
+                call.respond(HttpStatusCode.Created, insertedIds)
             }
 
-            // Update market item
-            put("/market_items/{id}") {
-                val id =
-                    call.parameters["id"]?.toIntOrNull() ?: return@put call.respond(
+            // Read market items paging
+            get("/products") {
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val skip = call.request.queryParameters["skip"]?.toIntOrNull() ?: 0
+
+                // Валидация limit и skip
+                if (limit < 0 || skip < 0) {
+                    call.respond(
                         HttpStatusCode.BadRequest,
-                        "Invalid ID"
+                        "limit and skip must be non-negative"
                     )
-                val item = call.receive<MarketItem>()
-                marketItemService.update(id, item)
-                call.respond(HttpStatusCode.OK)
+                    return@get
+                }
+
+                val items = marketItemService.getPaged(limit, skip)
+                call.respond(items)
             }
+
+            get("/products/categories") {
+                val categories = marketItemService.getAllCategories()
+                call.respond(categories)
+            }
+
+            get("/products/category/{category}") {
+                val category = call.parameters["category"] ?: return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    "Wrong query params"
+                )
+
+                val items = marketItemService.getByCategory(category)
+                call.respond(items)
+            }
+
+            get("/products/search") {
+                val query = call.queryParameters["q"] ?: return@get call.respond(
+                    HttpStatusCode.BadRequest,
+                    "Wrong query params"
+                )
+
+                val items = marketItemService.search(query)
+                call.respond(items)
+            }
+
 
             // Delete market item
-            delete("/market_items/{id}") {
+            delete("/products/{id}") {
                 val id = call.parameters["id"]?.toIntOrNull() ?: return@delete call.respond(
                     HttpStatusCode.BadRequest,
                     "Invalid ID"

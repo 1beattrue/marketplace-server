@@ -97,6 +97,48 @@ class MarketItemService(database: Database) {
         }
     }
 
+    suspend fun getPaged(limit: Int, skip: Int) = dbQuery {
+        MarketItems.selectAll()
+            .drop(skip)
+            .take(limit)
+            .map { toMarketItem(it) }
+    }
+
+    suspend fun getAllCategories(): List<String> = dbQuery {
+        MarketItems
+            .select(MarketItems.category)
+            .withDistinct()
+            .map { it[MarketItems.category] }
+    }
+
+    suspend fun getByCategory(category: String) = dbQuery {
+        MarketItems
+            .selectAll()
+            .where { MarketItems.category eq category }
+            .map { toMarketItem(it) }
+    }
+
+    suspend fun search(q: String) = dbQuery {
+        MarketItems
+            .selectAll()
+            .where { MarketItems.title.lowerCase() like "${q.lowercase()}%" }
+            .map { toMarketItem(it) }
+    }
+
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
+
+    private fun toMarketItem(row: ResultRow): MarketItem {
+        return MarketItem(
+            title = row[MarketItems.title],
+            description = row[MarketItems.description],
+            price = row[MarketItems.price],
+            discountPercentage = row[MarketItems.discountPercentage],
+            rating = row[MarketItems.rating],
+            stock = row[MarketItems.stock],
+            brand = row[MarketItems.brand],
+            category = row[MarketItems.category],
+            thumbnail = row[MarketItems.thumbnail],
+        )
+    }
 }
