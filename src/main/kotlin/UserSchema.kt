@@ -41,15 +41,18 @@ class UserService(database: Database) {
     }
 
     suspend fun readByEmail(email: String): ExposedUser? = dbQuery {
-        Users.selectAll()
+        Users
+            .selectAll()
             .where { Users.email eq email }
-            .map {
-                ExposedUser(
-                    it[Users.name],
-                    it[Users.email],
-                    it[Users.password]
-                )
-            }
+            .map { toDto(it) }
+            .singleOrNull()
+    }
+
+    suspend fun getById(id: Int) = dbQuery {
+        Users
+            .selectAll()
+            .where { Users.id eq id }
+            .map { toDto(it) }
             .singleOrNull()
     }
 
@@ -85,5 +88,10 @@ class UserService(database: Database) {
             .withSubject(user.email)
             .sign(Algorithm.HMAC256(jwtSecret))
     }
-}
 
+    private fun toDto(raw: ResultRow) = ExposedUser(
+        raw[Users.name],
+        raw[Users.email],
+        raw[Users.password]
+    )
+}

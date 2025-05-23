@@ -26,10 +26,10 @@ fun Application.configureDatabases() {
 
             put("/products") {
                 val items = call.receive<List<MarketItem>>()
-                val insertedIds = items.map { item ->
+                items.map { item ->
                     marketItemService.update(item.id, item)
                 }
-                call.respond(HttpStatusCode.Created, insertedIds)
+                call.respond(HttpStatusCode.Created)
             }
 
             // Read market items paging
@@ -98,10 +98,8 @@ fun Application.configureDatabases() {
                 }
 
                 val newUser = ExposedUser(user.name, user.email, user.password)
-                val createdUser = userService.readByEmail(newUser.email)
-                    ?: return@post call.respond(HttpStatusCode.InternalServerError, "User creation failed")
-
-                val jwt = userService.createJWT(createdUser)
+                val createdUserId = userService.create(newUser)
+                val jwt = userService.createJWT(userService.getById(createdUserId)!!)
                 call.respond(HttpStatusCode.Created, mapOf("token" to jwt))
             }
 

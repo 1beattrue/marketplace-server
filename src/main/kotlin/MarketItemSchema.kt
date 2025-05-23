@@ -61,23 +61,22 @@ class MarketItemService(database: Database) {
             it[brand] = item.brand
             it[category] = item.category
             it[thumbnail] = item.thumbnail
+            it[image] = item.images.firstOrNull() ?: ""
         }[MarketItems.id]
     }
 
-    suspend fun update(id: Int, item: MarketItem) {
-        dbQuery {
-            MarketItems.update({ MarketItems.id eq id }) {
-                it[title] = item.title
-                it[description] = item.description
-                it[price] = item.price
-                it[discountPercentage] = item.discountPercentage
-                it[rating] = item.rating
-                it[stock] = item.stock
-                it[brand] = item.brand
-                it[category] = item.category
-                it[thumbnail] = item.thumbnail
-                it[image] = item.images.firstOrNull() ?: ""
-            }
+    suspend fun update(id: Int, item: MarketItem)= dbQuery {
+        MarketItems.update({ MarketItems.id eq id }) {
+            it[title] = item.title
+            it[description] = item.description
+            it[price] = item.price
+            it[discountPercentage] = item.discountPercentage
+            it[rating] = item.rating
+            it[stock] = item.stock
+            it[brand] = item.brand
+            it[category] = item.category
+            it[thumbnail] = item.thumbnail
+            it[image] = item.images.firstOrNull() ?: ""
         }
     }
 
@@ -91,7 +90,7 @@ class MarketItemService(database: Database) {
         MarketItems.selectAll()
             .drop(skip)
             .take(limit)
-            .map { toMarketItem(it) }
+            .map { toDto(it) }
     }
 
     suspend fun getAllCategories(): List<String> = dbQuery {
@@ -105,20 +104,20 @@ class MarketItemService(database: Database) {
         MarketItems
             .selectAll()
             .where { MarketItems.category eq category }
-            .map { toMarketItem(it) }
+            .map { toDto(it) }
     }
 
     suspend fun search(q: String) = dbQuery {
         MarketItems
             .selectAll()
             .where { MarketItems.title.lowerCase() like "${q.lowercase()}%" }
-            .map { toMarketItem(it) }
+            .map { toDto(it) }
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
 
-    private fun toMarketItem(row: ResultRow): MarketItem {
+    private fun toDto(row: ResultRow): MarketItem {
         return MarketItem(
             id = row[MarketItems.id],
             title = row[MarketItems.title],
